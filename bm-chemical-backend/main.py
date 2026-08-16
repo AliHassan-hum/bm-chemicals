@@ -11,6 +11,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException, status, Form, File, UploadFile
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
 import models, schemas
@@ -20,13 +21,11 @@ from pydantic import BaseModel
 # Auth & DB Dependencies
 from deps import get_db, get_current_user, verify_admin, SECRET_KEY, ALGORITHM
 
-# ----------------------------------------------------
 # LangGraph Qurandazi Router Import
-# ----------------------------------------------------
 from api.qurandazi import router as qurandazi_router
 
 
-# Lifespan Context Manager (App Start hone par safe setup karta hai)
+# Lifespan Context Manager
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 1. Safe Database Init
@@ -48,17 +47,29 @@ async def lifespan(app: FastAPI):
 # App Initialization with Lifespan
 app = FastAPI(title="BM Chemical Platform API", lifespan=lifespan)
 
-# CORS Setup
+# FIXED: Explicit CORS Setup for Vercel Frontend & Credentials
+origins = [
+    "https://bm-chemical-frontend.vercel.app",
+    "http://localhost:3000",
+    "*"
+]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Qurandazi Router
 app.include_router(qurandazi_router)
+
+# Static Files Serving setup
+upload_dir = "/tmp/static" if os.environ.get("VERCEL") else "static"
+if os.path.exists(upload_dir):
+    app.mount("/static", StaticFiles(directory=upload_dir), name="static")
 
 # Security Settings
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
