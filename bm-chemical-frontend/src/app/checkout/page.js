@@ -13,7 +13,7 @@ export default function Checkout() {
 
     try {
       // Simulating Order Placement to FastAPI Backend
-      const res = await fetch("http://127.0.0.1:8000/orders/create", {
+      const res = await fetch("http://https://bm-chemical-backend.vercel.app:8000/orders/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

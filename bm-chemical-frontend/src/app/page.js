@@ -13,7 +13,7 @@ export default function Storefront() {
   useEffect(() => {
     async function fetchProducts() {
       try {
-        const res = await fetch("http://127.0.0.1:8000/products/");
+        const res = await fetch("http://https://bm-chemical-backend.vercel.app:8000/products/");
         if (res.ok) {
           const data = await res.json();
           setProducts(data);
@@ -185,7 +185,7 @@ export default function Storefront() {
                 <div className="h-52 bg-slate-50 relative flex items-center justify-center p-6 border-b border-slate-100">
                   {product.image ? (
                     <img
-                      src={`http://127.0.0.1:8000/${product.image}`}
+                      src={`http://https://bm-chemical-backend.vercel.app:8000/${product.image}`}
                       alt={product.name}
                       className="max-h-full max-w-full object-contain group-hover:scale-110 transition-transform duration-300"
                     />

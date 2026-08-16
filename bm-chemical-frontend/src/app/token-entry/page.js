@@ -17,7 +17,7 @@ export default function TokenEntry() {
 
     try {
       // Direct FastApi backend call to register physical market token
-      const res = await fetch("http://127.0.0.1:8000/tokens/submit", {
+      const res = await fetch("http://https://bm-chemical-backend.vercel.app:8000/tokens/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

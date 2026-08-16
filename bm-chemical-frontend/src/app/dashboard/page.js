@@ -18,7 +18,7 @@ export default function Dashboard() {
     image: null,
   });
 
-  const API_URL = "http://127.0.0.1:8000";
+  const API_URL = "http://https://bm-chemical-backend.vercel.app:8000";
 
   useEffect(() => {
     fetchProducts();
