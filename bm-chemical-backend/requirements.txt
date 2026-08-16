@@ -6,3 +6,6 @@ python-jose
 bcrypt
 python-multipart
 python-dotenv
+langgraph
+langchain
+langchain-core
