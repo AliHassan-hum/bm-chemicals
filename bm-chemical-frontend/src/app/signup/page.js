@@ -19,13 +19,12 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      // FIXED: Direct Production Backend URL
-      const res = await fetch("https://bm-chemical-backend.vercel.app/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
+      // Slash ('/') end mein add karein:
+const res = await fetch("https://bm-chemical-backend.vercel.app/register", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(formData),
+});
       const data = await res.json();
 
       if (res.ok) {
