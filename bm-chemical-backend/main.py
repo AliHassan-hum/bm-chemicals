@@ -47,6 +47,9 @@ async def lifespan(app: FastAPI):
 # App Initialization with Lifespan
 app = FastAPI(title="BM Chemical Platform API", lifespan=lifespan)
 
+@app.options("/{full_path:path}")
+async def options_handler(full_path: str):
+    return {"status": "ok"}
 # FIXED: Explicit CORS Setup for Vercel Frontend & Credentials
 origins = [
     "https://bm-chemical-frontend.vercel.app",
