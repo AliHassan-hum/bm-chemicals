@@ -54,13 +54,13 @@ origins = [
     "*"
 ]
 
+# FIXED CORS SETUP
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_credentials=False,  # Wildcard (*) ke sath False hona zaroori hai
+    allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],
 )
 
 # Qurandazi Router
