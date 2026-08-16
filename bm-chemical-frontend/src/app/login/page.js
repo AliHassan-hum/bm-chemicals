@@ -6,7 +6,7 @@ import Link from "next/link";
 export default function Login() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    username: "", // FastAPI Form expects 'username' (which is our email)
+    username: "",
     password: "",
   });
   const [error, setError] = useState("");
@@ -17,13 +17,13 @@ export default function Login() {
     setError("");
     setLoading(true);
 
-    // Form-data format for FastAPI OAuth2 login
     const bodyFormData = new FormData();
     bodyFormData.append("username", formData.username);
     bodyFormData.append("password", formData.password);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/login", {
+      // FIXED: Direct Production Backend URL
+      const res = await fetch("https://bm-chemical-backend.vercel.app/login", {
         method: "POST",
         body: bodyFormData,
       });
@@ -31,7 +31,6 @@ export default function Login() {
       const data = await res.json();
 
       if (res.ok) {
-        // Token local storage mein save karein
         localStorage.setItem("token", data.access_token);
         alert("Login successful!");
         router.push("/dashboard");
