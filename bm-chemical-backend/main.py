@@ -47,17 +47,7 @@ async def lifespan(app: FastAPI):
 # App Initialization with Lifespan
 app = FastAPI(title="BM Chemical Platform API", lifespan=lifespan)
 
-@app.options("/{full_path:path}")
-async def options_handler(full_path: str):
-    return {"status": "ok"}
-# FIXED: Explicit CORS Setup for Vercel Frontend & Credentials
-origins = [
-    "https://bm-chemical-frontend.vercel.app",
-    "http://localhost:3000",
-    "*"
-]
-
-# FIXED CORS SETUP
+# FIXED: CORS Middleware MUST be added BEFORE options handlers
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -65,6 +55,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Explicit Options Handler for Vercel Preflight Requests
+@app.options("/{full_path:path}")
+async def options_handler(full_path: str):
+    return {"status": "ok"}
 
 # Qurandazi Router
 app.include_router(qurandazi_router)
