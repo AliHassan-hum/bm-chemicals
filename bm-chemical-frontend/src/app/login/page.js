@@ -32,9 +32,11 @@ export default function Login() {
 
       if (res.ok) {
         localStorage.setItem("token", data.access_token);
+        localStorage.setItem("role", data.role);
         alert("Login successful!");
         router.push("/dashboard");
-      } else {
+      }        
+      else {
         setError(data.detail || "Invalid email or password!");
       }
     } catch (err) {

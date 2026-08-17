@@ -7,6 +7,7 @@ export default function Dashboard() {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -18,9 +19,11 @@ export default function Dashboard() {
     image: null,
   });
 
-  const API_URL = "http://https://bm-chemical-backend.vercel.app:8000";
+  const API_URL = "https://bm-chemical-backend.vercel.app";
 
   useEffect(() => {
+    const role = typeof window !== "undefined" ? localStorage.getItem("role") : null;
+    setIsAdmin(role === "admin");
     fetchProducts();
     fetchOrders();
   }, []);
@@ -33,16 +36,16 @@ export default function Dashboard() {
         setProducts(data);
       }
     } catch (err) {
-  console.error("Products fetch error:", err);
-} finally {
-  setLoading(false);
-}
+      console.error("Products fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchOrders = async () => {
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-      
+
       let res = await fetch(`${API_URL}/orders/all`, {
         headers: {
           ...(token && { Authorization: `Bearer ${token}` }),
@@ -94,12 +97,18 @@ export default function Dashboard() {
 
   const handleDeleteProduct = async (id) => {
     if (!confirm("Are you sure you want to delete this product?")) return;
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     try {
       const res = await fetch(`${API_URL}/products/${id}`, {
         method: "DELETE",
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
       });
       if (res.ok) {
         setProducts(products.filter((p) => p.id !== id));
+      } else {
+        alert("Failed to delete product. Admin access required.");
       }
     } catch (err) {
       console.error("Delete error:", err);
@@ -108,6 +117,7 @@ export default function Dashboard() {
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     const formData = new FormData();
     formData.append("name", newProduct.name);
     formData.append("description", newProduct.description);
@@ -120,6 +130,9 @@ export default function Dashboard() {
     try {
       const res = await fetch(`${API_URL}/products/`, {
         method: "POST",
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
         body: formData,
       });
       if (res.ok) {
@@ -128,7 +141,7 @@ export default function Dashboard() {
         setNewProduct({ name: "", description: "", price: "", stock: "", image: null });
         fetchProducts();
       } else {
-        alert("Failed to add chemical.");
+        alert("Failed to add chemical. Admin access required.");
       }
     } catch (err) {
       console.error("Add product error:", err);
@@ -184,27 +197,31 @@ export default function Dashboard() {
               🧪 Products
             </button>
 
-            <button
-              onClick={() => { setActiveTab("orders"); fetchOrders(); }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition ${
-                activeTab === "orders"
-                  ? "bg-blue-600 text-white"
-                  : "text-slate-400 hover:bg-slate-800/60 hover:text-white"
-              }`}
-            >
-              📦 Orders
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() => { setActiveTab("orders"); fetchOrders(); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition ${
+                  activeTab === "orders"
+                    ? "bg-blue-600 text-white"
+                    : "text-slate-400 hover:bg-slate-800/60 hover:text-white"
+                }`}
+              >
+                📦 Orders
+              </button>
+            )}
 
-            <button
-              onClick={() => setActiveTab("clients")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition ${
-                activeTab === "clients"
-                  ? "bg-blue-600 text-white"
-                  : "text-slate-400 hover:bg-slate-800/60 hover:text-white"
-              }`}
-            >
-              👥 Clients
-            </button>
+            {isAdmin && (
+              <button
+                onClick={() => setActiveTab("clients")}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition ${
+                  activeTab === "clients"
+                    ? "bg-blue-600 text-white"
+                    : "text-slate-400 hover:bg-slate-800/60 hover:text-white"
+                }`}
+              >
+                👥 Clients
+              </button>
+            )}
           </nav>
         </div>
 
@@ -226,12 +243,14 @@ export default function Dashboard() {
             {activeTab === "clients" && "Client Directory"}
           </h1>
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-semibold transition"
-          >
-            + Add New Chemical
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-semibold transition"
+            >
+              + Add New Chemical
+            </button>
+          )}
         </div>
 
         {/* OVERVIEW & PRODUCTS TAB */}
@@ -263,7 +282,7 @@ export default function Dashboard() {
                     <th className="pb-3">Stock</th>
                     <th className="pb-3">Price (PKR)</th>
                     <th className="pb-3">Status</th>
-                    <th className="pb-3 text-right">Actions</th>
+                    {isAdmin && <th className="pb-3 text-right">Actions</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/50 text-sm">
@@ -283,14 +302,16 @@ export default function Dashboard() {
                           {p.stock > 0 ? "In Stock" : "Out of Stock"}
                         </span>
                       </td>
-                      <td className="py-4 text-right space-x-2">
-                        <button
-                          onClick={() => handleDeleteProduct(p.id)}
-                          className="px-3 py-1 bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 rounded text-xs transition"
-                        >
-                          Delete
-                        </button>
-                      </td>
+                      {isAdmin && (
+                        <td className="py-4 text-right space-x-2">
+                          <button
+                            onClick={() => handleDeleteProduct(p.id)}
+                            className="px-3 py-1 bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 rounded text-xs transition"
+                          >
+                            Delete
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -299,8 +320,8 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* ORDERS TAB WITH STATUS UPDATE */}
-        {activeTab === "orders" && (
+        {/* ORDERS TAB WITH STATUS UPDATE (admin only) */}
+        {activeTab === "orders" && isAdmin && (
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold">Live Customer Orders</h3>
@@ -365,8 +386,8 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* CLIENTS TAB */}
-        {activeTab === "clients" && (
+        {/* CLIENTS TAB (admin only) */}
+        {activeTab === "clients" && isAdmin && (
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center py-12">
             <h3 className="text-xl font-bold mb-2">Registered Clients Directory</h3>
             <p className="text-slate-400 text-sm">
@@ -376,8 +397,8 @@ export default function Dashboard() {
         )}
       </main>
 
-      {/* Add Chemical Modal */}
-      {isModalOpen && (
+      {/* Add Chemical Modal (admin only) */}
+      {isModalOpen && isAdmin && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50 p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md">
             <h3 className="text-xl font-bold mb-4">Add New Chemical Product</h3>
