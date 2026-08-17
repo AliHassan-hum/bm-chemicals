@@ -193,7 +193,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     to_encode = {"sub": user.email, "exp": expire}
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     
-    return {"access_token": encoded_jwt, "token_type": "bearer"}
+    return {"access_token": encoded_jwt, "token_type": "bearer", "role": user.role}
 
 
 # === 3. ORDERS ENDPOINTS ===
