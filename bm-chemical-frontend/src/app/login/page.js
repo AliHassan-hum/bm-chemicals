@@ -22,7 +22,6 @@ export default function Login() {
     bodyFormData.append("password", formData.password);
 
     try {
-      // FIXED: Direct Production Backend URL
       const res = await fetch("https://bm-chemical-backend.vercel.app/login", {
         method: "POST",
         body: bodyFormData,
@@ -35,8 +34,7 @@ export default function Login() {
         localStorage.setItem("role", data.role);
         alert("Login successful!");
         router.push("/dashboard");
-      }        
-      else {
+      } else {
         setError(data.detail || "Invalid email or password!");
       }
     } catch (err) {
@@ -76,7 +74,12 @@ export default function Login() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Password</label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-medium text-slate-400">Password</label>
+              <Link href="/forgot-password" className="text-xs text-blue-400 hover:underline">
+                Forgot Password?
+              </Link>
+            </div>
             <input
               type="password"
               required

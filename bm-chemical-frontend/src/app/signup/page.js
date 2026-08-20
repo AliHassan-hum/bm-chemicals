@@ -8,7 +8,7 @@ export default function Signup() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    role: "customer", // Default role
+    role: "customer", // Public signup is always a customer account
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,12 +19,11 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      // Slash ('/') end mein add karein:
-const res = await fetch("https://bm-chemical-backend.vercel.app/register", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(formData),
-});
+      const res = await fetch("https://bm-chemical-backend.vercel.app/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
       const data = await res.json();
 
       if (res.ok) {
@@ -81,17 +80,9 @@ const res = await fetch("https://bm-chemical-backend.vercel.app/register", {
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Account Role</label>
-            <select
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 text-slate-200"
-              value={formData.role}
-              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-            >
-              <option value="customer">Customer / Buyer</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
+          {/* Account Role selector removed on purpose:
+              Public signup should only ever create "customer" accounts.
+              Admin accounts are created separately (not exposed here). */}
 
           <button
             type="submit"
