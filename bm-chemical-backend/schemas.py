@@ -12,7 +12,7 @@ class ProductCreate(BaseModel):
 # Product response (jab database se wapis product ka data milega)
 class ProductResponse(ProductCreate):
     id: int
-    image_url: Optional[str] = None # 🆕 Yeh line yahan add kar di!
+    image_url: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -59,3 +59,15 @@ class OrderResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+# === FORGOT / RESET PASSWORD ===
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+class MessageResponse(BaseModel):
+    message: str

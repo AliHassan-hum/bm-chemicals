@@ -1,4 +1,5 @@
 import os
+import secrets
 from datetime import datetime, timedelta, timezone
 from typing import List
 import shutil
@@ -21,6 +22,9 @@ from pydantic import BaseModel
 # Auth & DB Dependencies
 from deps import get_db, get_current_user, verify_admin, SECRET_KEY, ALGORITHM
 
+# Email helper for password reset
+from email_utils import send_password_reset_email
+
 # LangGraph Qurandazi Router Import
 from api.qurandazi import router as qurandazi_router
 
@@ -33,14 +37,14 @@ async def lifespan(app: FastAPI):
         Base.metadata.create_all(bind=engine)
     except Exception as e:
         print(f"Database table creation skipped on Vercel: {e}")
-    
+
     # 2. Safe Directory Creation
     try:
         upload_path = "/tmp/static/products" if os.environ.get("VERCEL") else "static/products"
         os.makedirs(upload_path, exist_ok=True)
     except Exception as e:
         print(f"Folder creation skipped: {e}")
-        
+
     yield
 
 
@@ -71,6 +75,7 @@ if os.path.exists(upload_dir):
 
 # Security Settings
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+PASSWORD_RESET_EXPIRE_MINUTES = 30
 
 # Password Helpers
 def get_password_hash(password: str) -> str:
@@ -105,11 +110,11 @@ async def create_product(
     UPLOAD_DIR = "/tmp/static/products" if os.environ.get("VERCEL") else "static/products"
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     file_path = os.path.join(UPLOAD_DIR, image.filename)
-    
+
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(image.file, buffer)
-        
-    image_url_path = f"/{file_path}".replace("\\", "/") 
+
+    image_url_path = f"/{file_path}".replace("\\", "/")
 
     db_product = models.Product(
         name=name,
@@ -118,7 +123,7 @@ async def create_product(
         stock=stock,
         image_url=image_url_path
     )
-    
+
     db.add(db_product)
     db.commit()
     db.refresh(db_product)
@@ -130,34 +135,34 @@ def get_products(db: Session = Depends(get_db)):
 
 @app.put("/products/{product_id}", response_model=schemas.ProductResponse)
 def update_product(
-    product_id: int, 
-    updated_product: schemas.ProductCreate, 
+    product_id: int,
+    updated_product: schemas.ProductCreate,
     db: Session = Depends(get_db),
     current_admin: models.User = Depends(verify_admin)
 ):
     db_product = db.query(models.Product).filter(models.Product.id == product_id).first()
     if db_product is None:
         raise HTTPException(status_code=404, detail="Product not found!")
-    
+
     db_product.name = updated_product.name
     db_product.description = updated_product.description
     db_product.price = updated_product.price
     db_product.stock = updated_product.stock
-    
+
     db.commit()
     db.refresh(db_product)
     return db_product
 
 @app.delete("/products/{product_id}")
 def delete_product(
-    product_id: int, 
+    product_id: int,
     db: Session = Depends(get_db),
     current_admin: models.User = Depends(verify_admin)
 ):
     db_product = db.query(models.Product).filter(models.Product.id == product_id).first()
     if db_product is None:
         raise HTTPException(status_code=404, detail="Product not found!")
-    
+
     db.delete(db_product)
     db.commit()
     return {"message": f"Product with ID {product_id} has been deleted successfully!"}
@@ -170,9 +175,12 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
     if db_user:
         raise HTTPException(status_code=400, detail="Email already registered!")
-    
+
     hashed_pwd = get_password_hash(user.password)
-    new_user = models.User(email=user.email, hashed_password=hashed_pwd, role=user.role) 
+
+    # SECURITY: public signup can NEVER create an admin account,
+    # regardless of what role value is sent in the request body.
+    new_user = models.User(email=user.email, hashed_password=hashed_pwd, role="customer")
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -181,19 +189,73 @@ def register_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
 @app.post("/login", response_model=schemas.Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == form_data.username).first()
-    
+
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode = {"sub": user.email, "exp": expire}
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    
+
     return {"access_token": encoded_jwt, "token_type": "bearer", "role": user.role}
+
+
+# === 2b. FORGOT / RESET PASSWORD ===
+
+@app.post("/forgot-password", response_model=schemas.MessageResponse)
+def forgot_password(data: schemas.ForgotPasswordRequest, db: Session = Depends(get_db)):
+    generic_response = {"message": "If that email is registered, a reset link has been sent."}
+
+    user = db.query(models.User).filter(models.User.email == data.email).first()
+    if not user:
+        # Don't reveal whether the email exists or not
+        return generic_response
+
+    reset_token = secrets.token_urlsafe(32)
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=PASSWORD_RESET_EXPIRE_MINUTES)
+
+    token_entry = models.PasswordResetToken(
+        user_id=user.id,
+        token=reset_token,
+        expires_at=expires_at,
+        used=False,
+    )
+    db.add(token_entry)
+    db.commit()
+
+    send_password_reset_email(user.email, reset_token)
+
+    return generic_response
+
+@app.post("/reset-password", response_model=schemas.MessageResponse)
+def reset_password(data: schemas.ResetPasswordRequest, db: Session = Depends(get_db)):
+    token_entry = db.query(models.PasswordResetToken).filter(
+        models.PasswordResetToken.token == data.token
+    ).first()
+
+    if not token_entry or token_entry.used:
+        raise HTTPException(status_code=400, detail="Invalid or already used reset link.")
+
+    expires_at = token_entry.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+
+    if expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Reset link has expired. Please request a new one.")
+
+    user = db.query(models.User).filter(models.User.id == token_entry.user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    user.hashed_password = get_password_hash(data.new_password)
+    token_entry.used = True
+    db.commit()
+
+    return {"message": "Password has been reset successfully. You can now log in."}
 
 
 # === 3. ORDERS ENDPOINTS ===
@@ -210,7 +272,7 @@ def place_order(
 
     if product.stock < order_data.quantity:
         raise HTTPException(
-            status_code=400, 
+            status_code=400,
             detail=f"Stock kam hai! Sirf {product.stock} items available hain."
         )
 
@@ -265,7 +327,7 @@ def update_order_status_patch(
     db_order = db.query(models.Order).filter(models.Order.id == order_id).first()
     if not db_order:
         raise HTTPException(status_code=404, detail="Order nahi mila!")
-        
+
     status_update = status_data.get("status", "").lower()
     valid_statuses = ["pending", "approved", "shipped", "delivered", "cancelled"]
     if status_update not in valid_statuses:
@@ -291,7 +353,7 @@ def update_order_status(
     db_order = db.query(models.Order).filter(models.Order.id == order_id).first()
     if not db_order:
         raise HTTPException(status_code=404, detail="Order nahi mila!")
-        
+
     status_update = status_update.lower()
     valid_statuses = ["pending", "approved", "shipped", "delivered", "cancelled"]
     if status_update not in valid_statuses:

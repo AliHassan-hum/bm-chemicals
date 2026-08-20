@@ -23,7 +23,7 @@ class Product(Base):
     description = Column(String)
     price = Column(Float, nullable=False)
     stock = Column(Integer, default=0)
-    image_url = Column(String, nullable=True) 
+    image_url = Column(String, nullable=True)
 
 
 # === 3. USER MODEL ===
@@ -51,7 +51,8 @@ class Order(Base):
 
     # Relationship to Token
     token = relationship("Token", back_populates="order", uselist=False)
-    
+
+
 class Token(Base):
     __tablename__ = "tokens"
 
@@ -64,3 +65,15 @@ class Token(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     order = relationship("Order", back_populates="token")
+
+
+# === 5. PASSWORD RESET TOKEN MODEL ===
+class PasswordResetToken(Base):
+    __tablename__ = "password_reset_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    token = Column(String, unique=True, index=True, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    used = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
