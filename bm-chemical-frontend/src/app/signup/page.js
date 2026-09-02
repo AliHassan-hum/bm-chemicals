@@ -1,3 +1,4 @@
+// src/app/signup/page.js
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -27,7 +28,6 @@ export default function Signup() {
       const data = await res.json();
 
       if (res.ok) {
-        alert("Account created successfully! Ab login karein.");
         router.push("/login");
       } else {
         setError(data.detail || "Registration failed!");
@@ -40,65 +40,71 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-8 w-full max-w-md shadow-2xl">
-        <div className="text-center mb-6">
-          <h2 className="text-3xl font-extrabold bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent">
-            BM CHEMICALS
-          </h2>
-          <p className="text-slate-400 text-sm mt-1">Create a new account</p>
+    <div className="min-h-screen bg-[#f8f9ff] flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <Link href="/" className="flex items-center justify-center gap-2 mb-8">
+          <svg className="w-7 h-7 text-[#0056b3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 2v6l-5 9a2 2 0 002 3h12a2 2 0 002-3l-5-9V2M9 2h6" />
+          </svg>
+          <span className="text-lg font-bold text-[#0d1c2f]">BM Chemicals</span>
+        </Link>
+
+        <div className="bg-white border border-slate-200 rounded-2xl brand-shadow-lg p-8">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-[#0d1c2f]">Create a new account</h2>
+            <p className="text-sm text-[#334155] mt-1">Join BM Chemicals to start ordering.</p>
+          </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm p-3 rounded-lg mb-4 text-center">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold text-[#334155] mb-1.5">Email Address</label>
+              <input
+                type="email"
+                required
+                className="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:border-[#0056b3] focus:ring-2 focus:ring-[#0056b3]/10 transition-colors"
+                placeholder="user@example.com"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-[#334155] mb-1.5">Password</label>
+              <input
+                type="password"
+                required
+                className="w-full bg-white border border-slate-200 rounded-lg p-3 text-sm focus:outline-none focus:border-[#0056b3] focus:ring-2 focus:ring-[#0056b3]/10 transition-colors"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
+            </div>
+
+            {/* Account Role selector intentionally omitted:
+                Public signup always creates a "customer" account. */}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 bg-[#0056b3] hover:bg-[#003f87] text-white rounded-lg font-semibold text-sm transition-colors disabled:opacity-50 mt-2"
+            >
+              {loading ? "Creating Account..." : "Sign Up"}
+            </button>
+          </form>
+
+          <p className="text-center text-[#334155] text-sm mt-6">
+            Already have an account?{" "}
+            <Link href="/login" className="text-[#0056b3] hover:underline font-semibold">
+              Login here
+            </Link>
+          </p>
         </div>
-
-        {error && (
-          <div className="bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm p-3 rounded-lg mb-4 text-center">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Email Address</label>
-            <input
-              type="email"
-              required
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500"
-              placeholder="user@example.com"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Password</label>
-            <input
-              type="password"
-              required
-              className="w-full bg-slate-800 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500"
-              placeholder="••••••••"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-            />
-          </div>
-
-          {/* Account Role selector removed on purpose:
-              Public signup should only ever create "customer" accounts.
-              Admin accounts are created separately (not exposed here). */}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-500 rounded-lg font-semibold text-sm transition duration-200 disabled:opacity-50 mt-2"
-          >
-            {loading ? "Creating Account..." : "Sign Up"}
-          </button>
-        </form>
-
-        <p className="text-center text-slate-400 text-sm mt-6">
-          Already have an account?{" "}
-          <Link href="/login" className="text-blue-400 hover:underline">
-            Login here
-          </Link>
-        </p>
       </div>
     </div>
   );
