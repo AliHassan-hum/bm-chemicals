@@ -1,3 +1,4 @@
+// src/app/dashboard/page.js
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
@@ -9,7 +10,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newProduct, setNewProduct] = useState({
     name: "",
@@ -69,7 +69,6 @@ export default function Dashboard() {
     }
   };
 
-  // Update Order Status Handler
   const handleStatusChange = async (orderId, newStatus) => {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     try {
@@ -83,7 +82,6 @@ export default function Dashboard() {
       });
 
       if (res.ok) {
-        // Optimistically update UI
         setOrders((prev) =>
           prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
         );
@@ -151,75 +149,76 @@ export default function Dashboard() {
   const getStatusBadgeClass = (status) => {
     switch (status?.toLowerCase()) {
       case "approved":
-        return "bg-blue-500/10 text-blue-400 border border-blue-500/30";
+        return "bg-blue-50 text-[#0056b3] border border-blue-200";
       case "shipped":
-        return "bg-purple-500/10 text-purple-400 border border-purple-500/30";
+        return "bg-violet-50 text-violet-700 border border-violet-200";
       case "delivered":
-        return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30";
+        return "bg-emerald-50 text-emerald-700 border border-emerald-200";
       case "cancelled":
-        return "bg-rose-500/10 text-rose-400 border border-rose-500/30";
+        return "bg-red-50 text-red-700 border border-red-200";
       default:
-        return "bg-amber-500/10 text-amber-400 border border-amber-500/30";
+        return "bg-amber-50 text-amber-700 border border-amber-200";
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-slate-950 text-slate-100">
+    <div className="flex min-h-screen bg-[#f8f9ff] font-sans">
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 border-r border-slate-800 p-6 flex flex-col justify-between">
+      <aside className="w-64 bg-white border-r border-slate-200 p-6 flex flex-col justify-between">
         <div>
-          <Link href="/">
-            <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent mb-8 cursor-pointer">
-              BM CHEMICALS
-            </h2>
+          <Link href="/" className="flex items-center gap-2 mb-10">
+            <svg className="w-7 h-7 text-[#0056b3]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 2v6l-5 9a2 2 0 002 3h12a2 2 0 002-3l-5-9V2M9 2h6" />
+            </svg>
+            <span className="text-lg font-bold text-[#0d1c2f]">BM Chemicals</span>
           </Link>
 
-          <nav className="space-y-2">
+          <nav className="space-y-1.5">
             <button
               onClick={() => { setActiveTab("dashboard"); fetchOrders(); }}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition ${
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors ${
                 activeTab === "dashboard"
-                  ? "bg-blue-600 text-white"
-                  : "text-slate-400 hover:bg-slate-800/60 hover:text-white"
+                  ? "bg-[#0056b3] text-white"
+                  : "text-[#334155] hover:bg-slate-50"
               }`}
             >
-              📊 Dashboard Overview
+              Dashboard Overview
             </button>
 
             <button
               onClick={() => setActiveTab("products")}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition ${
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors ${
                 activeTab === "products"
-                  ? "bg-blue-600 text-white"
-                  : "text-slate-400 hover:bg-slate-800/60 hover:text-white"
+                  ? "bg-[#0056b3] text-white"
+                  : "text-[#334155] hover:bg-slate-50"
               }`}
             >
-              🧪 Products
+              Products
             </button>
 
             {isAdmin && (
               <button
                 onClick={() => { setActiveTab("orders"); fetchOrders(); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition ${
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors ${
                   activeTab === "orders"
-                    ? "bg-blue-600 text-white"
-                    : "text-slate-400 hover:bg-slate-800/60 hover:text-white"
+                    ? "bg-[#0056b3] text-white"
+                    : "text-[#334155] hover:bg-slate-50"
                 }`}
               >
-                📦 Orders
+                Orders
               </button>
             )}
 
             {isAdmin && (
               <button
                 onClick={() => setActiveTab("clients")}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium text-sm transition ${
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg font-medium text-sm transition-colors ${
                   activeTab === "clients"
-                    ? "bg-blue-600 text-white"
-                    : "text-slate-400 hover:bg-slate-800/60 hover:text-white"
+                    ? "bg-[#0056b3] text-white"
+                    : "text-[#334155] hover:bg-slate-50"
                 }`}
               >
-                👥 Clients
+                Clients
               </button>
             )}
           </nav>
@@ -227,16 +226,16 @@ export default function Dashboard() {
 
         <Link
           href="/"
-          className="w-full text-center py-2.5 rounded-lg bg-slate-800 text-slate-300 text-sm font-medium hover:bg-slate-700 transition"
+          className="w-full text-center py-2.5 rounded-lg bg-slate-50 border border-slate-200 text-[#334155] text-sm font-medium hover:bg-slate-100 transition-colors"
         >
           Exit Dashboard
         </Link>
       </aside>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <main className="flex-1 p-8 overflow-y-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-extrabold capitalize">
+          <h1 className="text-2xl font-bold text-[#0d1c2f]">
             {activeTab === "dashboard" && "Dashboard Overview"}
             {activeTab === "products" && "Product Catalog Management"}
             {activeTab === "orders" && "Customer Orders"}
@@ -246,38 +245,37 @@ export default function Dashboard() {
           {isAdmin && (
             <button
               onClick={() => setIsModalOpen(true)}
-              className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-semibold transition"
+              className="px-4 py-2.5 bg-[#0056b3] hover:bg-[#003f87] text-white rounded-lg text-sm font-semibold transition-colors"
             >
               + Add New Chemical
             </button>
           )}
         </div>
 
-        {/* OVERVIEW & PRODUCTS TAB */}
         {(activeTab === "dashboard" || activeTab === "products") && (
           <div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-              <div className="p-6 bg-slate-900 border border-slate-800 rounded-2xl">
-                <span className="text-slate-400 text-sm font-medium">Total Chemical Products</span>
-                <p className="text-3xl font-extrabold text-blue-400 mt-2">{products.length}</p>
+              <div className="p-6 bg-white border border-slate-200 rounded-2xl brand-shadow">
+                <span className="text-[#334155] text-sm font-medium">Total Chemical Products</span>
+                <p className="text-3xl font-bold text-[#0056b3] mt-2">{products.length}</p>
               </div>
-              <div className="p-6 bg-slate-900 border border-slate-800 rounded-2xl">
-                <span className="text-slate-400 text-sm font-medium">Total Placed Orders</span>
-                <p className="text-3xl font-extrabold text-amber-400 mt-2">{orders.length}</p>
+              <div className="p-6 bg-white border border-slate-200 rounded-2xl brand-shadow">
+                <span className="text-[#334155] text-sm font-medium">Total Placed Orders</span>
+                <p className="text-3xl font-bold text-[#0056b3] mt-2">{orders.length}</p>
               </div>
-              <div className="p-6 bg-slate-900 border border-slate-800 rounded-2xl">
-                <span className="text-slate-400 text-sm font-medium">Low Stock Items</span>
-                <p className="text-3xl font-extrabold text-rose-400 mt-2">
+              <div className="p-6 bg-white border border-slate-200 rounded-2xl brand-shadow">
+                <span className="text-[#334155] text-sm font-medium">Low Stock Items</span>
+                <p className="text-3xl font-bold text-red-600 mt-2">
                   {products.filter((p) => p.stock < 10).length}
                 </p>
               </div>
             </div>
 
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
-              <h3 className="text-xl font-bold mb-6">Chemical Inventory</h3>
+            <div className="bg-white border border-slate-200 rounded-2xl brand-shadow p-6">
+              <h3 className="text-lg font-semibold text-[#0d1c2f] mb-6">Chemical Inventory</h3>
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-800 text-slate-400 text-xs uppercase tracking-wider">
+                  <tr className="border-b border-slate-200 text-[#334155] text-xs uppercase tracking-wider">
                     <th className="pb-3">Chemical Name</th>
                     <th className="pb-3">Stock</th>
                     <th className="pb-3">Price (PKR)</th>
@@ -285,28 +283,28 @@ export default function Dashboard() {
                     {isAdmin && <th className="pb-3 text-right">Actions</th>}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/50 text-sm">
+                <tbody className="divide-y divide-slate-100 text-sm">
                   {products.map((p) => (
-                    <tr key={p.id} className="hover:bg-slate-800/30 transition">
-                      <td className="py-4 font-semibold">{p.name}</td>
-                      <td className="py-4">{p.stock}</td>
-                      <td className="py-4">Rs. {p.price}</td>
+                    <tr key={p.id}>
+                      <td className="py-4 font-semibold text-[#0d1c2f]">{p.name}</td>
+                      <td className="py-4 text-[#334155]">{p.stock}</td>
+                      <td className="py-4 text-[#334155]">Rs. {p.price}</td>
                       <td className="py-4">
                         <span
                           className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
                             p.stock > 0
-                              ? "bg-emerald-500/10 text-emerald-400"
-                              : "bg-rose-500/10 text-rose-400"
+                              ? "bg-emerald-50 text-emerald-700"
+                              : "bg-red-50 text-red-700"
                           }`}
                         >
                           {p.stock > 0 ? "In Stock" : "Out of Stock"}
                         </span>
                       </td>
                       {isAdmin && (
-                        <td className="py-4 text-right space-x-2">
+                        <td className="py-4 text-right">
                           <button
                             onClick={() => handleDeleteProduct(p.id)}
-                            className="px-3 py-1 bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 rounded text-xs transition"
+                            className="px-3 py-1.5 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg text-xs font-semibold transition-colors"
                           >
                             Delete
                           </button>
@@ -320,26 +318,25 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* ORDERS TAB WITH STATUS UPDATE (admin only) */}
         {activeTab === "orders" && isAdmin && (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+          <div className="bg-white border border-slate-200 rounded-2xl brand-shadow p-6">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold">Live Customer Orders</h3>
+              <h3 className="text-lg font-semibold text-[#0d1c2f]">Live Customer Orders</h3>
               <button
                 onClick={fetchOrders}
-                className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs rounded-lg text-slate-300"
+                className="px-3.5 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-xs font-semibold rounded-lg text-[#334155] transition-colors"
               >
-                🔄 Refresh Orders
+                Refresh Orders
               </button>
             </div>
 
             {orders.length === 0 ? (
-              <p className="text-slate-400 py-6 text-center">No orders placed yet.</p>
+              <p className="text-[#334155] py-6 text-center text-sm">No orders placed yet.</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
-                    <tr className="border-b border-slate-800 text-slate-400 text-xs uppercase">
+                    <tr className="border-b border-slate-200 text-[#334155] text-xs uppercase">
                       <th className="pb-3">Order ID</th>
                       <th className="pb-3">Product ID</th>
                       <th className="pb-3">Qty</th>
@@ -350,15 +347,15 @@ export default function Dashboard() {
                       <th className="pb-3 text-right">Update Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800/50 text-sm">
+                  <tbody className="divide-y divide-slate-100 text-sm">
                     {orders.map((o) => (
-                      <tr key={o.id} className="hover:bg-slate-800/30 transition">
-                        <td className="py-4 font-mono text-blue-400">#{o.id}</td>
-                        <td className="py-4">{o.product_id}</td>
-                        <td className="py-4 font-semibold">{o.quantity}</td>
-                        <td className="py-4 text-emerald-400 font-bold">Rs. {o.total_price}</td>
-                        <td className="py-4 text-slate-300">{o.phone || o.contact || "N/A"}</td>
-                        <td className="py-4 text-slate-300 max-w-xs truncate">{o.address || "N/A"}</td>
+                      <tr key={o.id}>
+                        <td className="py-4 font-mono text-[#0056b3] font-semibold">#{o.id}</td>
+                        <td className="py-4 text-[#334155]">{o.product_id}</td>
+                        <td className="py-4 font-semibold text-[#0d1c2f]">{o.quantity}</td>
+                        <td className="py-4 text-emerald-700 font-bold">Rs. {o.total_price}</td>
+                        <td className="py-4 text-[#334155]">{o.phone || o.contact || "N/A"}</td>
+                        <td className="py-4 text-[#334155] max-w-xs truncate">{o.address || "N/A"}</td>
                         <td className="py-4">
                           <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass(o.status)}`}>
                             {o.status || "Pending"}
@@ -368,7 +365,7 @@ export default function Dashboard() {
                           <select
                             value={o.status || "Pending"}
                             onChange={(e) => handleStatusChange(o.id, e.target.value)}
-                            className="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500 cursor-pointer"
+                            className="bg-white border border-slate-200 text-[#0d1c2f] text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-[#0056b3] cursor-pointer"
                           >
                             <option value="Pending">Pending</option>
                             <option value="Approved">Approved</option>
@@ -386,84 +383,83 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* CLIENTS TAB (admin only) */}
         {activeTab === "clients" && isAdmin && (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center py-12">
-            <h3 className="text-xl font-bold mb-2">Registered Clients Directory</h3>
-            <p className="text-slate-400 text-sm">
-              All registered buyers & businesses will appear here.
+          <div className="bg-white border border-slate-200 rounded-2xl brand-shadow p-6 text-center py-12">
+            <h3 className="text-lg font-semibold text-[#0d1c2f] mb-2">Registered Clients Directory</h3>
+            <p className="text-[#334155] text-sm">
+              All registered buyers &amp; businesses will appear here.
             </p>
           </div>
         )}
       </main>
 
-      {/* Add Chemical Modal (admin only) */}
+      {/* Add Chemical Modal */}
       {isModalOpen && isAdmin && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50 p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold mb-4">Add New Chemical Product</h3>
+        <div className="fixed inset-0 bg-[#0d1c2f]/40 backdrop-blur-sm flex justify-center items-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-[#0d1c2f] mb-4">Add New Chemical Product</h3>
             <form onSubmit={handleAddProduct} className="space-y-4">
               <div>
-                <label className="text-xs text-slate-400 block mb-1">Chemical Name</label>
+                <label className="text-xs font-semibold text-[#334155] block mb-1.5">Chemical Name</label>
                 <input
                   type="text"
                   required
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-sm"
+                  className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#0056b3]"
                   value={newProduct.name}
                   onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
                 />
               </div>
               <div>
-                <label className="text-xs text-slate-400 block mb-1">Description</label>
+                <label className="text-xs font-semibold text-[#334155] block mb-1.5">Description</label>
                 <textarea
-                  className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-sm"
+                  className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#0056b3]"
                   value={newProduct.description}
                   onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs text-slate-400 block mb-1">Price (PKR)</label>
+                  <label className="text-xs font-semibold text-[#334155] block mb-1.5">Price (PKR)</label>
                   <input
                     type="number"
                     required
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-sm"
+                    className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#0056b3]"
                     value={newProduct.price}
                     onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-slate-400 block mb-1">Stock</label>
+                  <label className="text-xs font-semibold text-[#334155] block mb-1.5">Stock</label>
                   <input
                     type="number"
                     required
-                    className="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-sm"
+                    className="w-full border border-slate-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#0056b3]"
                     value={newProduct.stock}
                     onChange={(e) => setNewProduct({ ...newProduct, stock: e.target.value })}
                   />
                 </div>
               </div>
               <div>
-                <label className="text-xs text-slate-400 block mb-1">Image File</label>
+                <label className="text-xs font-semibold text-[#334155] block mb-1.5">Image File</label>
                 <input
                   type="file"
                   accept="image/*"
                   required
                   onChange={(e) => setNewProduct({ ...newProduct, image: e.target.files[0] })}
-                  className="w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white"
+                  className="w-full text-xs text-[#334155] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[#0056b3] file:text-white"
                 />
               </div>
               <div className="flex justify-end gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-sm"
+                  className="px-4 py-2 bg-slate-50 border border-slate-200 text-[#334155] rounded-lg text-sm font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-sm font-semibold"
+                  className="px-4 py-2 bg-[#0056b3] hover:bg-[#003f87] text-white rounded-lg text-sm font-semibold transition-colors"
                 >
                   Save Product
                 </button>
