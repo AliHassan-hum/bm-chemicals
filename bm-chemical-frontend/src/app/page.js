@@ -5,6 +5,39 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
+const API_BASE = "https://bm-chemical-backend.vercel.app";
+
+// Backend sends `image_url` (e.g. "/static/products/x.jpg" or "//tmp/static/products/x.jpg").
+// Normalise it into a full URL, and fall back to the placeholder icon if it fails to load.
+function getImageSrc(url) {
+  if (!url) return null;
+  if (url.startsWith("http")) return url;
+  const clean = url.replace(/^\/+/, "").replace(/^tmp\//, "");
+  return `${API_BASE}/${clean}`;
+}
+
+function ProductImage({ product }) {
+  const [failed, setFailed] = useState(false);
+  const src = getImageSrc(product.image_url);
+
+  if (!src || failed) {
+    return (
+      <svg className="w-16 h-16 text-[#c2c6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v6l-6 10a1 1 0 001 1.5h16a1 1 0 001-1.5L15 9V3M9 3h6" />
+      </svg>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={product.name}
+      onError={() => setFailed(true)}
+      className="max-h-full max-w-full object-contain"
+    />
+  );
+}
+
 export default function Storefront() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -235,17 +268,7 @@ export default function Storefront() {
                 className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:brand-shadow-lg transition-shadow duration-200 flex flex-col"
               >
                 <div className="h-48 bg-[#f8f9ff] relative flex items-center justify-center p-6 border-b border-slate-100">
-                  {product.image ? (
-                    <img
-                      src={`https://bm-chemical-backend.vercel.app/${product.image}`}
-                      alt={product.name}
-                      className="max-h-full max-w-full object-contain"
-                    />
-                  ) : (
-                    <svg className="w-16 h-16 text-[#c2c6d4]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 3v6l-6 10a1 1 0 001 1.5h16a1 1 0 001-1.5L15 9V3M9 3h6" />
-                    </svg>
-                  )}
+                  <ProductImage product={product} />
                   <span className="absolute top-3 right-3 bg-[#eff4ff] text-[#0056b3] text-[10px] font-semibold px-2.5 py-1 rounded-full border border-[#c2c6d4]">
                     Auto-Token
                   </span>
@@ -265,7 +288,7 @@ export default function Storefront() {
                       <span className="text-lg font-bold text-[#0d1c2f]">Rs. {product.price}</span>
                     </div>
                     <Link
-                      href="/checkout"
+                      href={`/checkout?product=${product.id}`}
                       className="bg-[#0056b3] hover:bg-[#003f87] text-white px-4 py-2.5 rounded-lg text-xs font-semibold transition-colors"
                     >
                       Buy Now
