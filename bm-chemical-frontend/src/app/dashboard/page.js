@@ -2,8 +2,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -22,6 +24,12 @@ export default function Dashboard() {
   const API_URL = "https://bm-chemical-backend.vercel.app";
 
   useEffect(() => {
+    // Login guard: bina token ke dashboard nahi khulna chahiye
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    if (!token) {
+      router.replace("/login");
+      return;
+    }
     const role = typeof window !== "undefined" ? localStorage.getItem("role") : null;
     setIsAdmin(role === "admin");
     fetchProducts();
