@@ -61,7 +61,7 @@ export default function Dashboard() {
       });
 
       if (!res.ok) {
-        res = await fetch(`${API_URL}/orders/`, {
+        res = await fetch(`${API_URL}/orders/my-orders`, {
           headers: {
             ...(token && { Authorization: `Bearer ${token}` }),
           },
