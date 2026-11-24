@@ -9,6 +9,7 @@ import Footer from "@/components/Footer";
 export default function MyOrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [productNames, setProductNames] = useState({});
 
   const API_URL = "https://bm-chemical-backend.vercel.app";
 
@@ -34,12 +35,39 @@ export default function MyOrdersPage() {
         const data = await res.json();
         setOrders(data);
       }
+
+      // Product ke naam invoice aur cards mein dikhane ke liye
+      try {
+        const pr = await fetch(`${API_URL}/products/`);
+        if (pr.ok) {
+          const plist = await pr.json();
+          const map = {};
+          plist.forEach((p) => {
+            map[p.id] = p.name;
+          });
+          setProductNames(map);
+        }
+      } catch (e) {
+        console.error("Products fetch error:", e);
+      }
     } catch (err) {
       console.error("Error fetching my orders:", err);
     } finally {
       setLoading(false);
     }
   };
+
+  // Backend ki created_at UTC hoti hai (kabhi "Z" ke baghair), isliye "Z" laga kar parse karte hain
+  const parseDate = (value) => {
+    if (!value) return new Date();
+    const hasZone = /[zZ]$|[+-]\d\d:?\d\d$/.test(value);
+    return new Date(hasZone ? value : value + "Z");
+  };
+
+  const productLabel = (order) => productNames[order.product_id] || `Product #${order.product_id}`;
+
+  const esc = (str) =>
+    String(str).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   const downloadReceipt = (order) => {
     const printWindow = window.open("", "_blank");
@@ -68,7 +96,7 @@ export default function MyOrdersPage() {
           <div class="details">
             <p><strong>Order ID:</strong> #${order.id}</p>
             <p><strong>Status:</strong> ${order.status?.toUpperCase() || "PENDING"}</p>
-            <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
+            <p><strong>Date:</strong> ${parseDate(order.created_at).toLocaleDateString()}</p>
           </div>
 
           <table class="table">
@@ -82,7 +110,7 @@ export default function MyOrdersPage() {
             </thead>
             <tbody>
               <tr>
-                <td>Chemical Order</td>
+                <td>${esc(productLabel(order))}</td>
                 <td>${order.product_id}</td>
                 <td>${order.quantity}</td>
                 <td>PKR ${order.total_price}</td>
@@ -184,7 +212,7 @@ export default function MyOrdersPage() {
                     </span>
                   </div>
                   <p className="text-sm text-[#334155]">
-                    Product ID: <span className="font-semibold text-[#0d1c2f]">{order.product_id}</span> · Quantity:{" "}
+                    <span className="font-semibold text-[#0d1c2f]">{productLabel(order)}</span> · Quantity:{" "}
                     <span className="font-semibold text-[#0d1c2f]">{order.quantity}</span>
                   </p>
                 </div>
