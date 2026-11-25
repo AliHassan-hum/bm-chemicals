@@ -10,3 +10,4 @@ langgraph
 langchain
 langchain-core
 psycopg[binary]
+cloudinary

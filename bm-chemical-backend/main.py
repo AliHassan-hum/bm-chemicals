@@ -13,6 +13,7 @@ from fastapi import FastAPI, Depends, HTTPException, status, Form, File, UploadF
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.orm import Session
 
 import models, schemas
@@ -24,6 +25,21 @@ from deps import get_db, get_current_user, verify_admin, SECRET_KEY, ALGORITHM
 
 # Email helper for password reset
 from email_utils import send_password_reset_email
+
+# Cloudinary (permanent image storage)
+import cloudinary
+import cloudinary.uploader
+
+CLOUDINARY_ENABLED = all(
+    os.getenv(k) for k in ("CLOUDINARY_CLOUD_NAME", "CLOUDINARY_API_KEY", "CLOUDINARY_API_SECRET")
+)
+if CLOUDINARY_ENABLED:
+    cloudinary.config(
+        cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+        api_key=os.getenv("CLOUDINARY_API_KEY"),
+        api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+        secure=True,
+    )
 
 # LangGraph Qurandazi Router Import
 from api.qurandazi import router as qurandazi_router
@@ -107,14 +123,32 @@ async def create_product(
     db: Session = Depends(get_db),
     current_admin: models.User = Depends(verify_admin)
 ):
-    UPLOAD_DIR = "/tmp/static/products" if os.environ.get("VERCEL") else "static/products"
-    os.makedirs(UPLOAD_DIR, exist_ok=True)
-    file_path = os.path.join(UPLOAD_DIR, image.filename)
+    if not (image.content_type or "").startswith("image/"):
+        raise HTTPException(status_code=400, detail="Sirf image file upload karein (jpg, png, webp).")
 
-    with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(image.file, buffer)
+    if CLOUDINARY_ENABLED:
+        # Permanent storage: Cloudinary par upload, DB mein sirf secure URL save hota hai
+        try:
+            upload = await run_in_threadpool(
+                cloudinary.uploader.upload,
+                image.file,
+                folder="bm-chemicals/products",
+                resource_type="image",
+            )
+            image_url_path = upload["secure_url"]
+        except Exception as e:
+            print(f"[create_product] Cloudinary upload failed: {e}")
+            raise HTTPException(status_code=502, detail="Image upload failed. Please try again.")
+    else:
+        # Fallback (Cloudinary set nahi): local/tmp folder, jo serverless par permanent nahi hota
+        UPLOAD_DIR = "/tmp/static/products" if os.environ.get("VERCEL") else "static/products"
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        file_path = os.path.join(UPLOAD_DIR, image.filename)
 
-    image_url_path = f"/{file_path}".replace("\\", "/")
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(image.file, buffer)
+
+        image_url_path = f"/{file_path}".replace("\\", "/")
 
     db_product = models.Product(
         name=name,
@@ -210,10 +244,13 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 def forgot_password(data: schemas.ForgotPasswordRequest, db: Session = Depends(get_db)):
     generic_response = {"message": "If that email is registered, a reset link has been sent."}
 
+    print(f"[forgot-password] Lookup requested for email: {data.email}")
     user = db.query(models.User).filter(models.User.email == data.email).first()
     if not user:
+        print(f"[forgot-password] No user found in DB for email: {data.email}")
         # Don't reveal whether the email exists or not
         return generic_response
+    print(f"[forgot-password] User found: id={user.id}, email={user.email}")
 
     reset_token = secrets.token_urlsafe(32)
     expires_at = datetime.now(timezone.utc) + timedelta(minutes=PASSWORD_RESET_EXPIRE_MINUTES)
