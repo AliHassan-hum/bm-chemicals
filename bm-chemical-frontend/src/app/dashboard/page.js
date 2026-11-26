@@ -147,7 +147,18 @@ export default function Dashboard() {
         setNewProduct({ name: "", description: "", price: "", stock: "", image: null });
         fetchProducts();
       } else {
-        alert("Failed to add chemical. Admin access required.");
+        let detail = "";
+        try {
+          const err = await res.json();
+          detail = typeof err.detail === "string" ? err.detail : "";
+        } catch (e) {}
+        if (res.status === 401) {
+          alert("Session expire ho gaya (token 30 minute ka hota hai). Please dobara login karein.");
+        } else if (res.status === 403) {
+          alert("Admin access required. Admin account se login karein.");
+        } else {
+          alert(`Failed to add chemical (error ${res.status}). ${detail}`);
+        }
       }
     } catch (err) {
       console.error("Add product error:", err);
